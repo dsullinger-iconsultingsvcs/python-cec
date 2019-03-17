@@ -488,24 +488,41 @@ static PyObject * set_active_source(PyObject * self, PyObject * args) {
 
 static PyObject * volume_up(PyObject * self, PyObject * args) {
    if( PyArg_ParseTuple(args, ":volume_up") )
-      RETURN_BOOL(CEC_adapter->VolumeUp());
+      return Py_BuildValue("i", CEC_adapter->VolumeUp());
    return NULL;
 }
 
 static PyObject * volume_down(PyObject * self, PyObject * args) {
    if( PyArg_ParseTuple(args, ":volume_up") )
-      RETURN_BOOL(CEC_adapter->VolumeDown());
+      return Py_BuildValue("i", CEC_adapter->VolumeDown());
    return NULL;
 }
 
 #if CEC_LIB_VERSION_MAJOR > 1
 static PyObject * toggle_mute(PyObject * self, PyObject * args) {
    if( PyArg_ParseTuple(args, ":toggle_mute") )
-      RETURN_BOOL(CEC_adapter->AudioToggleMute());
+      return Py_BuildValue("i", CEC_adapter->AudioToggleMute());
    return NULL;
 }
 #endif
 
+static PyObject * audio_status(PyObject * self, PyObject * args) {
+   unsigned int forceUpdate = 1;
+   if( PyArg_ParseTuple(args, "i:audio_status", &forceUpdate) ) {
+      uint8_t sts = CEC_adapter->AudioStatus(forceUpdate != 0);
+      return Py_BuildValue("i", sts);
+   }
+   return NULL;
+}
+
+static PyObject * power_status(PyObject * self, PyObject * args) {
+   cec_logical_address addr = (cec_logical_address)CECDEVICE_UNKNOWN;
+   if( PyArg_ParseTuple(args, "|b:power_status", &addr) ) {
+      cec_power_status sts = CEC_adapter->GetDevicePowerStatus(addr);
+      return Py_BuildValue("i", sts);
+   }
+   return NULL;
+}
 static PyObject * set_stream_path(PyObject * self, PyObject * args) {
    PyObject * arg;
 
@@ -646,6 +663,8 @@ static PyMethodDef CecMethods[] = {
    {"volume_down", volume_down, METH_VARARGS, "Volume Down"},
 #if CEC_LIB_VERSION_MAJOR > 1
    {"toggle_mute", toggle_mute, METH_VARARGS, "Toggle Mute"},
+   {"audio_status", audio_status, METH_VARARGS, "Audio Status"},
+   {"power_status", power_status, METH_VARARGS, "Power Status"},
 #endif
    {"set_stream_path", set_stream_path, METH_VARARGS, "Set HDMI stream path"},
    {"set_physical_addr", set_physical_addr, METH_VARARGS,
